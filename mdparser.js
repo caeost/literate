@@ -1,12 +1,10 @@
+
 var fs = require("fs"),
     markdown = require( "markdown" ).markdown;
 
 
-var regex = /```([A-Za-z]*)?(-N)?([^```]*)```/g;
+var regex = /`{3}([A-Za-z]*)?(-N)?([^`]*)\n`{3}/g;
 
-//add more types later
-// https://github.com/github/linguist/blob/master/lib/linguist/languages.yml
-// (only web stuff should go into *name*-page format)
 var map = {
   "javascript": "js",
   "CSS": "css",
@@ -60,15 +58,17 @@ mdparser.prototype = {
   },
   parse: function(file) {
     var myArray,
-        result = {};
+        result = {},
+        last = 0;
   
     while ((myArray = regex.exec(file)) !== null) {
       var text = "" + myArray[3],
           noout = myArray[2],
           //see note in mdparser bash script
           type = myArray[1] ||  "javascript";
-  
-      if(!text.length) continue;
+  	
+      if(!text.length || (myArray.index + text.length) < last) continue;
+      last = myArray.index + text.length;
       if(noout) type = "page-" + type 
   
       if(result[type]) {
