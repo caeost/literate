@@ -26,15 +26,15 @@ var fs = require("fs"),
 
 #####Useful variables
 
-`regex` is at first just meant for [github flavored markdown](https://help.github.com/articles/github-flavored-markdown) style fenced code. We want to also very soon support 4 space indentation style. 
+`regex` is currently just meant for [github flavored markdown](https://help.github.com/articles/github-flavored-markdown) style fenced code. I also want to very soon support 4 space indentation style. 
 
 ```javascript
 var regex = /`{3}/g;
 ```
 
-The `map` of markdown syntax name types to extensions, will add more [types](https://github.com/github/linguist/blob/master/lib/linguist/languages.yml) later. I want to play with [highlight.js](https://www.npmjs.org/package/highlight) and see how its auto language detection code maybe work to prevent having to explicitly tag with code types (untagged code currently falls back to being javascript, could make it pull from a reverse map of `map` against the filename, that is file.ljs -> literate js).
+The `map` of markdown syntax name types to extensions, will add more [types](https://github.com/github/linguist/blob/master/lib/linguist/languages.yml) later. I want to play with [highlight.js](https://www.npmjs.org/package/highlight) and see how its auto language detection code could work to prevent having to explicitly tag with code types (untagged code currently falls back to being javascript, could make it pull from a reverse map of `map` against the filename, that is file.ljs -> literate js).
 
-Only web languages should work as documentation code (here being documentation code means being *-page)
+Only web languages will work as documentation code (here being documentation code means being *-page)
 ```javascript
 var map = {
   "javascript": "js",
@@ -98,16 +98,25 @@ mdparser.prototype = {
       });
     }
   },
+```
+
+The parse function basically just loops over all occurences of our special three backticks (which I dread to name until it only checks at the beginning of lines) and counts itself in and out of code blocks. This means that nested code blocks will __absolutely not work__. 
+
+You can still pass the code type after the three backticks and after that pass a -N (actually - anything will work)
+
+This code is a little verbose right now, but I'm hopeful that at least its relatively easy to follow and understand the idea. Striving for something approaching obvious correctness at the cost of no fancy coding and complex regexs.
+
+```
   parse: function(file) {
     var myArray,
         result = {},
         inCode = false,
+        documentationCode = false,
+        type,
         codeStart;
 
     while ((myArray = regex.exec(file)) !== null) {
       var index = myArray.index,
-          type = "javascript",
-          documentationCode = false,
           text = "";
 
       if(!inCode) {
@@ -116,10 +125,12 @@ mdparser.prototype = {
         var annotation = file.substring(index, lineEnd);
         var annotationArray = annotation.split("-");
         if(annotationArray[0] && annotationArray[0].length) {
-          type = annotationArray[0];
+          	type = annotationArray[0];
+        } else {
+        	type = "javascript";
         }
         //this supports the -N style
-        if(annotationArray[1]) {
+        if(annotationArray[1] && annotationArray[0].length) {
           documentationCode = true;
         }
 
@@ -145,8 +156,10 @@ mdparser.prototype = {
     return result;
   }
 }
+```
+Send it out to the world!
 
-
+```
 module.exports = mdparser;
 ```
 
