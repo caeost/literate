@@ -28,15 +28,8 @@ var fs = require("fs"),
 
 `regex` is at first just meant for [github flavored markdown](https://help.github.com/articles/github-flavored-markdown) style fenced code. We want to also very soon support 4 space indentation style. 
 
-The -N component to the regex is a temporary hack. This will I think break proper in editor syntax highlighting, as well as also not clearly enough saying what is and is not runtime code.
-
-__Note:__ currently compiling this into mdparser.js is blocked by only
-this regex, as you can see it doesnt allow backticks in side code
-blocks, which this regex obviously has, need to fix. Maybe split apart
-into something that just searches for three backticks? Do more in code?
-
 ```javascript
-var regex = /`{3}([A-Za-z]*)?(-N)?([^`]*)\n`{3}/g;
+var regex = /`{3}/g;
 ```
 
 The `map` of markdown syntax name types to extensions, will add more [types](https://github.com/github/linguist/blob/master/lib/linguist/languages.yml) later. I want to play with [highlight.js](https://www.npmjs.org/package/highlight) and see how its auto language detection code maybe work to prevent having to explicitly tag with code types (untagged code currently falls back to being javascript, could make it pull from a reverse map of `map` against the filename, that is file.ljs -> literate js).
@@ -84,7 +77,7 @@ mdparser.prototype = {
   },
   read: function(filename) {
     var that = this;
-    fs.readFile(filename, function (err, data) {
+    fs.readFile(filename, "utf8", function (err, data) {
       if (err) throw err;
       that.operate(data, filename);
       if(that.html) that.generateHtml(data);
@@ -108,24 +101,47 @@ mdparser.prototype = {
   parse: function(file) {
     var myArray,
         result = {},
-        last = 0;
-  
+        inCode = false,
+        codeStart;
+
     while ((myArray = regex.exec(file)) !== null) {
-      var text = "" + myArray[3],
-          noout = myArray[2],
-          //see note in mdparser bash script
-          type = myArray[1] ||  "javascript";
-  	
-      if(!text.length || (myArray.index + text.length) < last) continue;
-      last = myArray.index + text.length;
-      if(noout) type = "page-" + type 
-  
-      if(result[type]) {
-        result[type] += text;
+      var index = myArray.index,
+          type = "javascript",
+          documentationCode = false,
+          text = "";
+
+      if(!inCode) {
+        index += 3;
+        var lineEnd = file.indexOf("\n", index);
+        var annotation = file.substring(index, lineEnd);
+        var annotationArray = annotation.split("-");
+        if(annotationArray[0] && annotationArray[0].length) {
+          type = annotationArray[0];
+        }
+        //this supports the -N style
+        if(annotationArray[1]) {
+          documentationCode = true;
+        }
+
+        inCode = true;
+        codeStart = lineEnd || index;
       } else {
-        result[type] = text;
+        text = file.substring(codeStart, index);
+        if(text.length) {
+          if(documentationCode) {
+            type = "page-" + type;
+          }
+          if(result[type]) {
+            result[type] += text;
+          } else {
+            result[type] = text;
+          }
+        }
+        documentationCode = false;
+        codeStart = false;
+        inCode = false;
       }
-    } 
+    }
     return result;
   }
 }

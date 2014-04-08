@@ -3,7 +3,7 @@ var fs = require("fs"),
     markdown = require( "markdown" ).markdown;
 
 
-var regex = /`{3}([A-Za-z]*)?(-N)?([^`]*)\n`{3}/g;
+var regex = /`{3}/g;
 
 var map = {
   "javascript": "js",
@@ -35,7 +35,7 @@ mdparser.prototype = {
   },
   read: function(filename) {
     var that = this;
-    fs.readFile(filename, function (err, data) {
+    fs.readFile(filename, "utf8", function (err, data) {
       if (err) throw err;
       that.operate(data, filename);
       if(that.html) that.generateHtml(data);
@@ -59,24 +59,47 @@ mdparser.prototype = {
   parse: function(file) {
     var myArray,
         result = {},
-        last = 0;
-  
+        inCode = false,
+        codeStart;
+
     while ((myArray = regex.exec(file)) !== null) {
-      var text = "" + myArray[3],
-          noout = myArray[2],
-          //see note in mdparser bash script
-          type = myArray[1] ||  "javascript";
-  	
-      if(!text.length || (myArray.index + text.length) < last) continue;
-      last = myArray.index + text.length;
-      if(noout) type = "page-" + type 
-  
-      if(result[type]) {
-        result[type] += text;
+      var index = myArray.index,
+          type = "javascript",
+          documentationCode = false,
+          text = "";
+
+      if(!inCode) {
+        index += 3;
+        var lineEnd = file.indexOf("\n", index);
+        var annotation = file.substring(index, lineEnd);
+        var annotationArray = annotation.split("-");
+        if(annotationArray[0]) {
+          type = annotation
+        }
+        //this supports the -N style
+        if(annotationArray[1]) {
+          documentationCode = true;
+        }
+
+        inCode = true;
+        codeStart = lineEnd || index;
       } else {
-        result[type] = text;
+        text = file.substring(codeStart, index);
+        if(text.length) {
+          if(documentationCode) {
+            type = "page-" + type;
+          }
+          if(result[type]) {
+            result[type] += text;
+          } else {
+            result[type] = text;
+          }
+        }
+        documentationCode = false;
+        codeStart = false;
+        inCode = false;
       }
-    } 
+    }
     return result;
   }
 }
