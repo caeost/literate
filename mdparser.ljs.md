@@ -1,5 +1,7 @@
 ##Literate 
-__note:__ you should view this file in something that allows github flavored markdown style code blocks
+__note:__ you should view this file in something that allows github flavored markdown style code blocks.
+
+Viewing in [markdown-editor](http://jbt.github.io/markdown-editor/) works quite well.
 
 ###Basics
 This project comprises a few ideas.
@@ -11,7 +13,7 @@ This project comprises a few ideas.
   * Apply full tools of modern web to your source code
   * Do so in ways that are peformant and don't mess with viewing of source (sandboxing etc.)
 3. A flexible and simple structure that doesn't try to do to much (reordering, custom constructs, etc.)
-  
+
 ###Code
 
 #####Dependencies 
@@ -131,3 +133,4 @@ mdparser.prototype = {
 
 module.exports = mdparser;
 ```
+
