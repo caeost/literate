@@ -29,7 +29,7 @@ var fs = require("fs"),
 `regex` is currently just meant for [github flavored markdown](https://help.github.com/articles/github-flavored-markdown) style fenced code. I also want to very soon support 4 space indentation style. 
 
 ```javascript
-var regex = /`{3}/g;
+var regex = /(={3,}\n)?`{3}/g;
 ```
 
 The `map` of markdown syntax name types to extensions, will add more [types](https://github.com/github/linguist/blob/master/lib/linguist/languages.yml) later. I want to play with [highlight.js](https://www.npmjs.org/package/highlight) and see how its auto language detection code could work to prevent having to explicitly tag with code types (untagged code currently falls back to being javascript, could make it pull from a reverse map of `map` against the filename, that is file.ljs -> literate js).
@@ -43,6 +43,12 @@ var map = {
 };
 ```
 
+===
+```
+console.log("hello world");
+```
+
+
 ####Parser
 This is where the rubber hits the road. This is a constructor function which takes in three arguments. `filename` is simply the name of the file you are translating, this may have to be more flexible to handle directories later. `watch` determines whether or not to continue watching file for changes. `generateHtml` will cause it to render out the markdown, as well as output the documentation code. 
 
@@ -51,6 +57,11 @@ Some desirable changes:
   * allow passing an output name to write to
   * write html + documentation code to a directory that can be published easily
   * make sure the parser reveals what it does to more advanced usage
+  * abstract out file actions so we can also parse documents on client side. For example have a button that on click saves parsed js to clipboard
+  * build preview viewer. Just a simple node server with marked which opens a preivew window, or clientside just a window opening. This would have the running documentation code and update on preview
+  * write out headers and subheaders of markdown as comments to generated file
+  * build sourcemaps when asked to
+  * *MAYBE* support closure compiler style annotations in markdown if it can be done in a pretty and reliable way
 
 ```javascript
 var mdparser = function(filename, watch, generateHtml) {
@@ -69,9 +80,9 @@ var mdparser = function(filename, watch, generateHtml) {
 };
 
 mdparser.prototype = {
-  generateHtml: function(data) {
+  generateHtml: function(data, filename) {
     var html = markdown.toHTML(data);
-    fs.writeFile(output, html, function(err) {
+    fs.writeFile(filename, html, function(err) {
       if(err) throw err;
     });
   },
@@ -80,19 +91,24 @@ mdparser.prototype = {
     fs.readFile(filename, "utf8", function (err, data) {
       if (err) throw err;
       that.operate(data, filename);
-      if(that.html) that.generateHtml(data);
+      if(that.html) that.generateHtml(data, filename);
     });
   },
   operate: function(data, name) {
     var parsedObject = this.parse(data);
     for (var key in parsedObject) {
       var parsed = parsedObject[key],
+```
+
+This documentation code thing needs a serious cleanup..
+
+```javascript
           documentationCode = !~~key.indexOf("page-"),
           type = documentationCode ? key.substring(5) : key,
           output = name.split(".")[0] + (documentationCode ? "-page" : "") + "." + map[type];
-
+      console.log("type: " + type + " output: " + output);
       if(documentationCode && !this.html) continue;
-
+      
       fs.writeFile(output, parsed, function(err) {
         if(err) throw err;
       });
@@ -102,11 +118,9 @@ mdparser.prototype = {
 
 The parse function basically just loops over all occurences of our special three backticks (which I dread to name until it only checks at the beginning of lines) and counts itself in and out of code blocks. This means that nested code blocks will __absolutely not work__. 
 
-You can still pass the code type after the three backticks and after that pass a -N (actually - anything will work)
-
 This code is a little verbose right now, but I'm hopeful that at least its relatively easy to follow and understand the idea. Striving for something approaching obvious correctness at the cost of no fancy coding and complex regexs.
 
-```
+```javascript
   parse: function(file) {
     var myArray,
         result = {},
@@ -117,22 +131,15 @@ This code is a little verbose right now, but I'm hopeful that at least its relat
 
     while ((myArray = regex.exec(file)) !== null) {
       var index = myArray.index,
+      	  length = myArray[0].length,
+          doc = myArray[1],
           text = "";
 
       if(!inCode) {
-        index += 3;
+        index += length;
         var lineEnd = file.indexOf("\n", index);
-        var annotation = file.substring(index, lineEnd);
-        var annotationArray = annotation.split("-");
-        if(annotationArray[0] && annotationArray[0].length) {
-          	type = annotationArray[0];
-        } else {
-        	type = "javascript";
-        }
-        //this supports the -N style
-        if(annotationArray[1] && annotationArray[0].length) {
-          documentationCode = true;
-        }
+        type = file.substring(index, lineEnd) || "javascript"; //change to inferred page type later
+        documentationCode = doc;
 
         inCode = true;
         codeStart = lineEnd || index;
@@ -159,7 +166,7 @@ This code is a little verbose right now, but I'm hopeful that at least its relat
 ```
 Send it out to the world!
 
-```
+```javascript
 module.exports = mdparser;
 ```
 

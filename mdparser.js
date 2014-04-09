@@ -3,7 +3,7 @@ var fs = require("fs"),
     markdown = require( "markdown" ).markdown;
 
 
-var regex = /`{3}/g;
+var regex = /(={3,}\n)?`{3}/g;
 
 var map = {
   "javascript": "js",
@@ -27,9 +27,9 @@ var mdparser = function(filename, watch, generateHtml) {
 };
 
 mdparser.prototype = {
-  generateHtml: function(data) {
+  generateHtml: function(data, filename) {
     var html = markdown.toHTML(data);
-    fs.writeFile(output, html, function(err) {
+    fs.writeFile(filename, html, function(err) {
       if(err) throw err;
     });
   },
@@ -38,48 +38,45 @@ mdparser.prototype = {
     fs.readFile(filename, "utf8", function (err, data) {
       if (err) throw err;
       that.operate(data, filename);
-      if(that.html) that.generateHtml(data);
+      if(that.html) that.generateHtml(data, filename);
     });
   },
   operate: function(data, name) {
     var parsedObject = this.parse(data);
     for (var key in parsedObject) {
       var parsed = parsedObject[key],
+
           documentationCode = !~~key.indexOf("page-"),
           type = documentationCode ? key.substring(5) : key,
           output = name.split(".")[0] + (documentationCode ? "-page" : "") + "." + map[type];
-
+      console.log("type: " + type + " output: " + output);
       if(documentationCode && !this.html) continue;
-
+      
       fs.writeFile(output, parsed, function(err) {
         if(err) throw err;
       });
     }
   },
+
   parse: function(file) {
     var myArray,
         result = {},
         inCode = false,
+        documentationCode = false,
+        type,
         codeStart;
 
     while ((myArray = regex.exec(file)) !== null) {
       var index = myArray.index,
-          type = "javascript",
-          documentationCode = false,
+      	  length = myArray[0].length,
+          doc = myArray[1],
           text = "";
 
       if(!inCode) {
-        index += 3;
+        index += length;
         var lineEnd = file.indexOf("\n", index);
-        var annotation = file.substring(index, lineEnd);
-        var annotationArray = annotation.split("-");
-        if(annotationArray[0]) {
-          type = annotation
-        }
-        //this supports the -N style
-        if(annotationArray[1]) {
-          documentationCode = true;
-        }
+        type = file.substring(index, lineEnd) || "javascript"; //change to inferred page type later
+        documentationCode = doc;
 
         inCode = true;
         codeStart = lineEnd || index;
@@ -104,6 +101,4 @@ mdparser.prototype = {
   }
 }
 
-
 module.exports = mdparser;
-
