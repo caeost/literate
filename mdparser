@@ -3,9 +3,10 @@ var argv = require('minimist')(process.argv.slice(2));
 
 var filename = argv._[0],
     watch = argv.w,
-    generateHtml = argv.h;
+    generateHtml = argv.h,
+    output = argv.o;
 
 //pull out base language for file from extension mapped to type: extension map + l aka .ljs -> javascript
 
 var Parser = require('./mdparser.js');
-new Parser(filename, watch, generateHtml);
+new Parser(filename, watch, generateHtml, output);

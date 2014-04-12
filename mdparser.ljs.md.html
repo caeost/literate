@@ -69,6 +69,11 @@ var mdparser = function(filename, watch, generateHtml) {
 };</p>
 
 <p>mdparser.prototype = {
+  addFolder: function(name) {
+    var array = name.split(&quot;/&quot;);
+    array.splice(array.length - 1, 0, &quot;documentation&quot;);
+    return array.join(&quot;/&quot;);
+  }
   generateHtml: function(data, filename) {
     var html = markdown.toHTML(data);
     fs.writeFile(filename, html, function(err) {
@@ -80,7 +85,10 @@ var mdparser = function(filename, watch, generateHtml) {
     fs.readFile(filename, &quot;utf8&quot;, function (err, data) {
       if (err) throw err;
       that.operate(data, filename);
-      if(that.html) that.generateHtml(data, filename);
+      if(that.html) {
+        var name = this.addFolder(filename + &quot;.html&quot;);
+        that.generateHtml(data, name);
+      }
     });
   },
   operate: function(data, name) {
@@ -94,11 +102,15 @@ var mdparser = function(filename, watch, generateHtml) {
 <p><code></code>`javascript
           documentationCode = !~~key.indexOf(&quot;page-&quot;),
           type = documentationCode ? key.substring(5) : key,
-          output = name.split(&quot;.&quot;)[0] + (documentationCode ? &quot;-page&quot; : &quot;&quot;) + &quot;.&quot; + map[type];
-      console.log(&quot;type: &quot; + type + &quot; output: &quot; + output);
-      if(documentationCode &amp;&amp; !this.html) continue;</p>
+          output = name.split(&quot;.&quot;)[0] + (documentationCode ? &quot;-page&quot; : &quot;&quot;) + &quot;.&quot; + map[type];</p>
 
-<pre><code>  fs.writeFile(output, parsed, function(err) {
+<pre><code>  if(documentationCode) {
+    if(!this.html) {
+      continue;
+    }
+    output = this.addFolder(output);
+  }
+  fs.writeFile(output, parsed, function(err) {
     if(err) throw err;
   });
 }</code></pre>

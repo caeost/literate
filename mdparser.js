@@ -1,6 +1,8 @@
 
 var fs = require("fs"),
-    markdown = require( "markdown" ).markdown;
+    markdown = require( "markdown" ).markdown,
+    Promise = require('rsvp').Promise,
+    _ = require("underscore");
 
 
 var regex = /(={3,}\n)?`{3}/g;
@@ -11,50 +13,116 @@ var map = {
   "HTML": "html"
 };
 
-var mdparser = function(filename, watch, generateHtml) {
+var mdparser = function(filename, watch, generateHtml, output) {
   this.fileName = filename;
+  this.output = output || filename;
   this.watch = watch;
   this.html = generateHtml;
 
-  this.read(filename);
+
+  this.processFile(filename);
 
   if(watch) {
     var that = this;
     fs.watch(filename, function(e, name) {
-      that.read(filename);
+      that.processFile(filename);
     });
-  } 
+  }
 };
 
 mdparser.prototype = {
+  addFolder: function(name) {
+    return new Promise(function(resolve, reject) {
+      var array = name.split("/"),
+          fileName = array.pop();
+
+      array.push("documentation");
+      array.push(fileName);
+      var directoriedName = array.join("/");
+      try {
+        fs.mkdir(array.join("/"), function(err) {
+          if(err) reject(err);
+          resolve(directoriedName);
+        });
+      } catch(e) {
+        reject(e);
+      }
+    });
+  },
   generateHtml: function(data, filename) {
-    var html = markdown.toHTML(data);
-    fs.writeFile(filename, html, function(err) {
-      if(err) throw err;
+    var that = this;
+
+    return new Promise(function(resolve, reject) {
+      var html = markdown.toHTML(data);
+      that.addFolder(filename).then(function(name) {
+        that.write(name + ".html", html).then(resolve, reject);
+      });
+    });
+  },
+  processFile: function(filename) {
+    var that = this;
+    return new Promise(function(resolve, reject) {
+      this.read(filename).then(function(data) {
+        that.operate(data, filename);
+        if(that.html) {
+          that.generateHtml(data, name).then(resolve, reject);
+        } else {
+          resolve(true);
+        }
+      });
     });
   },
   read: function(filename) {
     var that = this;
-    fs.readFile(filename, "utf8", function (err, data) {
-      if (err) throw err;
-      that.operate(data, filename);
-      if(that.html) that.generateHtml(data, filename);
+
+    return new Promise(function(resolve, reject) {
+      try {
+        fs.readFile(filename, "utf8", function (err, data) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(data);
+          }
+        });
+      } catch(e) {
+        reject(e);
+      }
+    });
+  },
+  write: function(path, data) {
+    return new Promise(function(resolve, reject) {
+      try {
+        fs.writeFile(path, data, function(err) {
+          if(err) {
+            reject(err);
+          } else {
+            resolve(true);
+          }
+        });
+      } catch (e) {
+        reject(e);
+      }
     });
   },
   operate: function(data, name) {
-    var parsedObject = this.parse(data);
+    var parsedObject = this.parse(data),
+        that = this;
+
     for (var key in parsedObject) {
       var parsed = parsedObject[key],
 
           documentationCode = !~~key.indexOf("page-"),
           type = documentationCode ? key.substring(5) : key,
           output = name.split(".")[0] + (documentationCode ? "-page" : "") + "." + map[type];
-      console.log("type: " + type + " output: " + output);
-      if(documentationCode && !this.html) continue;
       
-      fs.writeFile(output, parsed, function(err) {
-        if(err) throw err;
-      });
+
+      if(documentationCode && this.html) {
+        this.addFolder(output).then(function(data) {
+          that.write(output, parsed)
+        });
+      } else {
+        that.write(output, parsed);
+      }
     }
   },
 
