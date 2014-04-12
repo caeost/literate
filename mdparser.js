@@ -13,20 +13,22 @@ var map = {
   "HTML": "html"
 };
 
-var mdparser = function(filename, watch, generateHtml, output) {
+var mdparser = function(filename, watch, doHtml, output) {
   this.fileName = filename;
   this.output = output || filename;
   this.watch = watch;
-  this.html = generateHtml;
+  this.html = doHtml;
 
 
-  this.processFile(filename);
+  if(filename) {
+    this.processFile(filename);
 
-  if(watch) {
-    var that = this;
-    fs.watch(filename, function(e, name) {
-      that.processFile(filename);
-    });
+    if(watch) {
+      var that = this;
+      fs.watch(filename, function(e, name) {
+        that.processFile(filename);
+      });
+    }
   }
 };
 
@@ -37,14 +39,20 @@ mdparser.prototype = {
           fileName = array.pop();
 
       array.push("documentation");
+      var directory = array.join("/");
+
       array.push(fileName);
       var directoriedName = array.join("/");
       try {
-        fs.mkdir(array.join("/"), function(err) {
-          if(err) reject(err);
-          resolve(directoriedName);
+        fs.mkdir(directory, function(err) {
+          if(err && err.code != "EEXIST") {
+            reject(err);
+          } else {
+            resolve(directoriedName);
+          }
         });
       } catch(e) {
+        console.error("addFolder error", e);
         reject(e);
       }
     });
@@ -62,10 +70,10 @@ mdparser.prototype = {
   processFile: function(filename) {
     var that = this;
     return new Promise(function(resolve, reject) {
-      this.read(filename).then(function(data) {
+      that.read(filename).then(function(data) {
         that.operate(data, filename);
         if(that.html) {
-          that.generateHtml(data, name).then(resolve, reject);
+          that.generateHtml(data, filename).then(resolve, reject);
         } else {
           resolve(true);
         }
@@ -85,6 +93,7 @@ mdparser.prototype = {
           }
         });
       } catch(e) {
+        console.error("read error", e);
         reject(e);
       }
     });
@@ -100,6 +109,7 @@ mdparser.prototype = {
           }
         });
       } catch (e) {
+        console.error("write error", e);
         reject(e);
       }
     });
@@ -117,8 +127,8 @@ mdparser.prototype = {
       
 
       if(documentationCode && this.html) {
-        this.addFolder(output).then(function(data) {
-          that.write(output, parsed)
+        this.addFolder(output).then(function(name) {
+          that.write(name, parsed)
         });
       } else {
         that.write(output, parsed);

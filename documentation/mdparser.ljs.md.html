@@ -16,7 +16,9 @@
 
 <p><code></code>`javascript
 var fs = require(&quot;fs&quot;),
-    markdown = require( &quot;markdown&quot; ).markdown;</p>
+    markdown = require( &quot;markdown&quot; ).markdown,
+    Promise = require(&#39;rsvp&#39;).Promise,
+    _ = require(&quot;underscore&quot;);</p>
 
 <p><code></code>`</p>
 
@@ -50,52 +52,121 @@ console.log(&quot;hello world&quot;);
 
 <p>Some desirable changes:</p>
 
-<ul><li>allow passing an output name to write to</li><li>write html + documentation code to a directory that can be published easily</li><li>make sure the parser reveals what it does to more advanced usage</li><li>abstract out file actions so we can also parse documents on client side. For example have a button that on click saves parsed js to clipboard</li><li>build preview viewer. Just a simple node server with marked which opens a preivew window, or clientside just a window opening. This would have the running documentation code and update on preview</li><li>write out headers and subheaders of markdown as comments to generated file</li><li>build sourcemaps when asked to</li><li><em>MAYBE</em> support closure compiler style annotations in markdown if it can be done in a pretty and reliable way</li></ul>
+<ul><li>allow passing an output name to write to</li><li>write html + documentation code to a directory that can be published easily</li><li>make sure the parser reveals what it does to more advanced usage</li><li>abstract out file actions so we can also parse documents on client side. For example have a button that on click saves parsed js to clipboard</li><li>build preview viewer. Just a simple node server with <a href="https://github.com/chjj/marked">marked</a> which opens a preivew window, or clientside just a window opening. This would have the running documentation code and update on preview</li><li>write out headers and subheaders of markdown as comments to generated file</li><li>build sourcemaps when asked to</li><li><em>MAYBE</em> support closure compiler style <a href="https://developers.google.com/closure/compiler/docs/js-for-compiler">annotations</a> in markdown if it can be done in a pretty and reliable way</li></ul>
 
 <p><code></code>`javascript
-var mdparser = function(filename, watch, generateHtml) {
+var mdparser = function(filename, watch, doHtml, output) {
   this.fileName = filename;
+  this.output = output || filename;
   this.watch = watch;
-  this.html = generateHtml;</p>
+  this.html = doHtml;</p>
 
-<p>  this.read(filename);</p>
+<p>  if(filename) {
+    this.processFile(filename);</p>
 
-<p>  if(watch) {
-    var that = this;
-    fs.watch(filename, function(e, name) {
-      that.read(filename);
-    });
-  } 
+<pre><code>if(watch) {
+  var that = this;
+  fs.watch(filename, function(e, name) {
+    that.processFile(filename);
+  });
+}</code></pre>
+
+<p>  }
 };</p>
 
 <p>mdparser.prototype = {
   addFolder: function(name) {
-    var array = name.split(&quot;/&quot;);
-    array.splice(array.length - 1, 0, &quot;documentation&quot;);
-    return array.join(&quot;/&quot;);
+    return new Promise(function(resolve, reject) {
+      var array = name.split(&quot;/&quot;),
+          fileName = array.pop();</p>
+
+<pre><code>  array.push(&quot;documentation&quot;);
+  var directory = array.join(&quot;/&quot;);
+
+  array.push(fileName);
+  var directoriedName = array.join(&quot;/&quot;);
+  try {
+    fs.mkdir(directory, function(err) {
+      if(err &amp;&amp; err.code != &quot;EEXIST&quot;) {
+        reject(err);
+      } else {
+        resolve(directoriedName);
+      }
+    });
+  } catch(e) {
+    console.error(&quot;addFolder error&quot;, e);
+    reject(e);
   }
+});</code></pre>
+
+<p>  },
   generateHtml: function(data, filename) {
-    var html = markdown.toHTML(data);
-    fs.writeFile(filename, html, function(err) {
-      if(err) throw err;
+    var that = this;</p>
+
+<pre><code>return new Promise(function(resolve, reject) {
+  var html = markdown.toHTML(data);
+  that.addFolder(filename).then(function(name) {
+    that.write(name + &quot;.html&quot;, html).then(resolve, reject);
+  });
+});</code></pre>
+
+<p>  },
+  processFile: function(filename) {
+    var that = this;
+    return new Promise(function(resolve, reject) {
+      that.read(filename).then(function(data) {
+        that.operate(data, filename);
+        if(that.html) {
+          that.generateHtml(data, filename).then(resolve, reject);
+        } else {
+          resolve(true);
+        }
+      });
     });
   },
   read: function(filename) {
-    var that = this;
+    var that = this;</p>
+
+<pre><code>return new Promise(function(resolve, reject) {
+  try {
     fs.readFile(filename, &quot;utf8&quot;, function (err, data) {
-      if (err) throw err;
-      that.operate(data, filename);
-      if(that.html) {
-        var name = this.addFolder(filename + &quot;.html&quot;);
-        that.generateHtml(data, name);
+      if (err) {
+        reject(err);
+      } else {
+        resolve(data);
+      }
+    });
+  } catch(e) {
+    console.error(&quot;read error&quot;, e);
+    reject(e);
+  }
+});</code></pre>
+
+<p>  },
+  write: function(path, data) {
+    return new Promise(function(resolve, reject) {
+      try {
+        fs.writeFile(path, data, function(err) {
+          if(err) {
+            reject(err);
+          } else {
+            resolve(true);
+          }
+        });
+      } catch (e) {
+        console.error(&quot;write error&quot;, e);
+        reject(e);
       }
     });
   },
   operate: function(data, name) {
-    var parsedObject = this.parse(data);
-    for (var key in parsedObject) {
-      var parsed = parsedObject[key],
-<code></code>`</p>
+    var parsedObject = this.parse(data),
+        that = this;</p>
+
+<pre><code>for (var key in parsedObject) {
+  var parsed = parsedObject[key],</code></pre>
+
+<p><code></code>`</p>
 
 <p>This documentation code thing needs a serious cleanup..</p>
 
@@ -104,15 +175,13 @@ var mdparser = function(filename, watch, generateHtml) {
           type = documentationCode ? key.substring(5) : key,
           output = name.split(&quot;.&quot;)[0] + (documentationCode ? &quot;-page&quot; : &quot;&quot;) + &quot;.&quot; + map[type];</p>
 
-<pre><code>  if(documentationCode) {
-    if(!this.html) {
-      continue;
-    }
-    output = this.addFolder(output);
+<pre><code>  if(documentationCode &amp;&amp; this.html) {
+    this.addFolder(output).then(function(name) {
+      that.write(name, parsed)
+    });
+  } else {
+    that.write(output, parsed);
   }
-  fs.writeFile(output, parsed, function(err) {
-    if(err) throw err;
-  });
 }</code></pre>
 
 <p>  },
