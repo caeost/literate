@@ -1,3 +1,4 @@
+<script type="text/javascript" src="./mdparser-page.js"></script>
 ##Literate 
 __note:__ you should view this file in something that allows github flavored markdown style code blocks.
 
