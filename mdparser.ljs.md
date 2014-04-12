@@ -34,15 +34,11 @@ var fs = require("fs"),
 var regex = /(={3,}\n)?`{3}/g;
 ```
 
-The `map` of markdown syntax name types to extensions, will add more [types](https://github.com/github/linguist/blob/master/lib/linguist/languages.yml) later. I want to play with [highlight.js](https://www.npmjs.org/package/highlight) and see how its auto language detection code could work to prevent having to explicitly tag with code types (untagged code currently falls back to being javascript, could make it pull from a reverse map of `map` against the filename, that is file.ljs -> literate js).
+The `map` of markdown syntax name types to extensions, pulled from [types](https://github.com/github/linguist/blob/master/lib/linguist/languages.yml). I want to play with [highlight.js](https://www.npmjs.org/package/highlight) and see how its auto language detection code could work to prevent having to explicitly tag with code types (untagged code currently falls back to being javascript, could make it pull from a reverse map of `map` against the filename, that is file.ljs -> literate js).
 
 Only web languages will work as documentation code (here being documentation code means being *-page)
 ```javascript
-var map = {
-  "javascript": "js",
-  "CSS": "css",
-  "HTML": "html"
-};
+var map = require("./languages.js");
 ```
 
 ===
@@ -180,7 +176,7 @@ This documentation code thing needs a serious cleanup..
 ```javascript
           documentationCode = !~~key.indexOf("page-"),
           type = documentationCode ? key.substring(5) : key,
-          output = name.split(".")[0] + (documentationCode ? "-page" : "") + "." + map[type];
+          output = name.split(".")[0] + (documentationCode ? "-page" : "") + map[type];
       
 
       if(documentationCode && this.html) {

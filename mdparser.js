@@ -7,11 +7,7 @@ var fs = require("fs"),
 
 var regex = /(={3,}\n)?`{3}/g;
 
-var map = {
-  "javascript": "js",
-  "CSS": "css",
-  "HTML": "html"
-};
+var map = require("./languages.js");
 
 var mdparser = function(filename, watch, doHtml, output) {
   this.fileName = filename;
@@ -123,7 +119,7 @@ mdparser.prototype = {
 
           documentationCode = !~~key.indexOf("page-"),
           type = documentationCode ? key.substring(5) : key,
-          output = name.split(".")[0] + (documentationCode ? "-page" : "") + "." + map[type];
+          output = name.split(".")[0] + (documentationCode ? "-page" : "") + map[type];
       
 
       if(documentationCode && this.html) {

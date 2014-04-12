@@ -30,15 +30,11 @@ var fs = require(&quot;fs&quot;),
 var regex = /(={3,}\n)?`{3}/g;
 </code></p>
 
-<p>The <code>map</code> of markdown syntax name types to extensions, will add more <a href="https://github.com/github/linguist/blob/master/lib/linguist/languages.yml">types</a> later. I want to play with <a href="https://www.npmjs.org/package/highlight">highlight.js</a> and see how its auto language detection code could work to prevent having to explicitly tag with code types (untagged code currently falls back to being javascript, could make it pull from a reverse map of <code>map</code> against the filename, that is file.ljs -&gt; literate js).</p>
+<p>The <code>map</code> of markdown syntax name types to extensions, pulled from <a href="https://github.com/github/linguist/blob/master/lib/linguist/languages.yml">types</a>. I want to play with <a href="https://www.npmjs.org/package/highlight">highlight.js</a> and see how its auto language detection code could work to prevent having to explicitly tag with code types (untagged code currently falls back to being javascript, could make it pull from a reverse map of <code>map</code> against the filename, that is file.ljs -&gt; literate js).</p>
 
 <p>Only web languages will work as documentation code (here being documentation code means being *-page)
 <code>javascript
-var map = {
-  &quot;javascript&quot;: &quot;js&quot;,
-  &quot;CSS&quot;: &quot;css&quot;,
-  &quot;HTML&quot;: &quot;html&quot;
-};
+var map = require(&quot;./languages.js&quot;);
 </code></p>
 
 <p>===
@@ -173,7 +169,7 @@ var mdparser = function(filename, watch, doHtml, output) {
 <p><code></code>`javascript
           documentationCode = !~~key.indexOf(&quot;page-&quot;),
           type = documentationCode ? key.substring(5) : key,
-          output = name.split(&quot;.&quot;)[0] + (documentationCode ? &quot;-page&quot; : &quot;&quot;) + &quot;.&quot; + map[type];</p>
+          output = name.split(&quot;.&quot;)[0] + (documentationCode ? &quot;-page&quot; : &quot;&quot;) + map[type];</p>
 
 <pre><code>  if(documentationCode &amp;&amp; this.html) {
     this.addFolder(output).then(function(name) {
