@@ -50,15 +50,20 @@ console.log("hello world");
 ####Parser
 This is where the rubber hits the road. This is a constructor function which takes in three arguments. `filename` is simply the name of the file you are translating, this may have to be more flexible to handle directories later. `watch` determines whether or not to continue watching file for changes. `generateHtml` will cause it to render out the markdown, as well as output the documentation code. 
 
+Features
+
+  * write html + documentation code to a directory that can be published easily
+  
+
 Some desirable changes:
 
   * allow passing an output name to write to
-  * write html + documentation code to a directory that can be published easily
   * make sure the parser reveals what it does to more advanced usage
   * abstract out file actions so we can also parse documents on client side. For example have a button that on click saves parsed js to clipboard
   * build preview viewer. Just a simple node server with [marked](https://github.com/chjj/marked) which opens a preivew window, or clientside just a window opening. This would have the running documentation code and update on preview
   * write out headers and subheaders of markdown as comments to generated file
   * build sourcemaps when asked to
+  	* this would be VERY useful
   * *MAYBE* support closure compiler style [annotations](https://developers.google.com/closure/compiler/docs/js-for-compiler) in markdown if it can be done in a pretty and reliable way
 
 ```javascript
