@@ -1,0 +1,12 @@
+#!/usr/bin/env node
+var argv = require('minimist')(process.argv.slice(2));
+
+var filename = argv._[0],
+    watch = argv.w,
+    generateHtml = argv.h,
+    output = argv.o;
+
+//change this to bin later
+var literate = require('./src/literate.js');
+var renderFunc = require("./src/markdownRender.js");
+literate(filename, renderFunc, output, "./src/templates/markdown-template.html");

@@ -12,6 +12,7 @@ var findLanguageName = function(extension) {
   }
 };
 
+//having the render func here makes it flexible but not as much an entry point as desired
 var literate = function(path, render, output, templatePath) {
 
   var extensions = path.match(/\.(\w+)/g);
