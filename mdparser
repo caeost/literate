@@ -8,5 +8,5 @@ var filename = argv._[0],
 
 //pull out base language for file from extension mapped to type: extension map + l aka .ljs -> javascript
 
-var Parser = require('./mdparser.js');
+var Parser = require('./bin/mdparser.js');
 new Parser(filename, watch, generateHtml, output);

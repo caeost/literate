@@ -1,0 +1,53 @@
+<script type="text/javascript" src="./mdparser-page.js"></script><h2>Literate</h2>
+
+<p><strong>note:</strong> you should view this file in something that allows github flavored markdown style code blocks.</p>
+
+<p>Viewing in <a href="http://jbt.github.io/markdown-editor/">markdown-editor</a> works quite well.</p><h3>Basics</h3>
+
+<p>This project comprises a few ideas.</p>
+
+<ol>
+<li>A basic implementation of literate programming that is as general as possible</li>
+<li>the ability to embed "documentation code" that is code that is not part of your final runtime, but useful
+<ul><li>Inline tests into your documentation / code</li>
+<li>Render out widgets</li>
+<li>Apply full tools of modern web to your source code</li>
+<li>Do so in ways that are peformant and don't mess with viewing of source (sandboxing etc.)</li></ul></li>
+<li>A flexible and simple structure that doesn't try to do to much (reordering, custom constructs, etc.)</li>
+<li>New thoughts:
+<ul><li>support normal markdown style code denotation (four spaces)</li>
+<li>spit out an array of objects containing a <code>text</code> property, the rendered out markdown or stripped code, <code>raw</code> which would be the underlying text + information about the block eg. is it documentation, what language is it in, other specifics related to block syntax which we can define</li>
+<li>from there rendering different files (just documentation, documentation + code, just code, etc.) could be based off of just a reusable filter function</li>
+<li>this filtered output can be rendered by any template engine to the demands of the user, including some base css and scripts perhaps.</li>
+<li>have an ability to merge back from rendered out files back into main file if delimeters between seperated chunks still exist. ex: render out just code file to concentrate on but if new lines which signal documentation continue to exist allow merging back of blocks</li>
+<li>allow more flexibility in terms of what can be outputted by reading from a config file for command line tool and allow flexible output paths etc.</li>
+<li>creating a new parser should not run the parser, should just create object.</li>
+<li>provide simple functions for converting to and from literate style for code, documenatation code, and documentation</li></ul></li>
+</ol><h3>Code</h3><h5>Dependencies</h5><h5>Useful variables</h5>
+
+<p><code>regex</code> is currently just meant for <a href="https://help.github.com/articles/github-flavored-markdown">github flavored markdown</a> style fenced code. I also want to very soon support 4 space indentation style. </p><p>The <code>map</code> of markdown syntax name types to extensions, pulled from <a href="https://github.com/github/linguist/blob/master/lib/linguist/languages.yml">types</a>. I want to play with <a href="https://www.npmjs.org/package/highlight">highlight.js</a> and see how its auto language detection code could work to prevent having to explicitly tag with code types (untagged code currently falls back to being javascript, could make it pull from a reverse map of <code>map</code> against the filename, that is file.ljs -> literate js).</p>
+
+<p>Only web languages will work as documentation code (here being documentation code means being *-page)</p><p>===</p><h4>Parser</h4>
+
+<p>This is where the rubber hits the road. This is a constructor function which takes in three arguments. <code>filename</code> is simply the name of the file you are translating, this may have to be more flexible to handle directories later. <code>watch</code> determines whether or not to continue watching file for changes. <code>generateHtml</code> will cause it to render out the markdown, as well as output the documentation code. </p>
+
+<p>Features</p>
+
+<ul>
+<li>write html + documentation code to a directory that can be published easily</li>
+</ul>
+
+<p>Some desirable changes:</p>
+
+<ul>
+<li>allow passing an output name to write to</li>
+<li>make sure the parser reveals what it does to more advanced usage</li>
+<li>abstract out file actions so we can also parse documents on client side. For example have a button that on click saves parsed js to clipboard</li>
+<li>build preview viewer. Just a simple node server with <a href="https://github.com/chjj/marked">marked</a> which opens a preivew window, or clientside just a window opening. This would have the running documentation code and update on preview</li>
+<li>write out headers and subheaders of markdown as comments to generated file</li>
+<li>build sourcemaps when asked to
+<ul><li>this would be VERY useful</li></ul></li>
+<li><em>MAYBE</em> support closure compiler style <a href="https://developers.google.com/closure/compiler/docs/js-for-compiler">annotations</a> in markdown if it can be done in a pretty and reliable way</li>
+</ul><p>This documentation code thing needs a serious cleanup..</p><p>The parse function basically just loops over all occurences of our special three backticks (which I dread to name until it only checks at the beginning of lines) and counts itself in and out of code blocks. This means that nested code blocks will <strong>absolutely not work</strong>. </p>
+
+<p>This code is a little verbose right now, but I'm hopeful that at least its relatively easy to follow and understand the idea. Striving for something approaching obvious correctness at the cost of no fancy coding and complex regexs.</p><p>Send it out to the world!</p>

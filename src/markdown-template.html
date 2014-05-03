@@ -1,0 +1,9 @@
+<%
+var string = "";
+_.each(blocks, function(block) {
+  if(block.langName == "markdown"){
+    string += converter.makeHtml(block.text);
+  }
+});
+print(string);
+%>

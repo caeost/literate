@@ -1,0 +1,10 @@
+<% 
+var string = "";
+_.each(blocks, function(block) { 
+    if(block.language.type == 'code' && !block.documentationCode) {
+      string += block.text;
+    }
+});
+print(string);
+%>
+
