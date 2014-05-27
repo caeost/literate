@@ -2,7 +2,7 @@ var _ = require("underscore"),
     parse = require("./parser.js");
 
 var render = function(code, template, hostLanguage, foreignLanguage) {
-  var extraArgs = Array.prototype.slice.call(arguments, 2);
+  var extraArgs = Array.prototype.slice.call(arguments, 4);
   
   var blocks = parse(code, hostLanguage, foreignLanguage)
 
