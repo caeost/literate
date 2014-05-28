@@ -1,10 +1,15 @@
 <% 
-var string = "";
-_.each(blocks, function(block) { 
-    if(block.language.type == 'code' && !block.documentationCode) {
-      string += block.text;
+var code = _.find(blocks, function(block){
+  return block.language.type == 'code';
+}).language;
+
+var string = _.map(blocks, function(block) {
+    var text = block.text
+    if(block.language.type !== 'code') {
+      text = allLines(text, code.makeForeign);
     }
-});
+    return text;
+}).join("");
 print(string);
 %>
 

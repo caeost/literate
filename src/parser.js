@@ -8,31 +8,34 @@ var parse = function(text, hostLanguage, foreignLanguage) {
       makeNative = hostLangSpecs.makeNative,
       splitBlocks = hostLangSpecs.splitBlocks,
       checkDocumentation = _.bind(hostLangSpecs.checkDocumentation, hostLangSpecs),
-      
       foreignLangSpecs = languages[foreignLanguage],
       foreignSplitBlocks = foreignLangSpecs.splitBlocks,
 
   //list of blocks
       blocks = [],
-      current = {},
+      current = {text: []},
       inHost = true;
 
+
   //helpers
+  var pushLine = function(line) {
+    current.text.push(line);
+  }
+
   var createBlock = function(text, language) {
-    var args = _.rest(arguments, 2);
+    current.text = current.text.join("\n");
     blocks.push(current);
     current = {
-      text: text ? text + "\n" : "",
+      text: text ? [text] : [],
       language: languages[language],
       langName: language,
       extension: languages[language].extension
     };
-    _.extend.apply(_, [current].concat(args));
   };
   var createForeignBlock = _.partial(createBlock, _, foreignLanguage);
   var createHostBlock = _.partial(createBlock, _, hostLanguage);
 
-  createHostBlock("");
+  createHostBlock();
 
   var lines = text.split("\n");
   for(var i = 0, len = lines.length; i < len; i++) {
@@ -51,26 +54,27 @@ var parse = function(text, hostLanguage, foreignLanguage) {
         //foreign can explicitly pass back the string "after" to make the found string be added to the
         //previous block, such as delimiting syntax in the host language that wraps the lines of another block
         if(foreign == "after") {
-          current.text += line + "\n";
+          //note: we push the non native line here because the foreign check tells us that the next line will be foreign, so nativising this doesn't make sense
+          pushLine(line);
         } else if(isForeignSplit == "after") {
           createForeignBlock(nativeLine);
+          createForeignBlock();
         } else {
-          next = nativeLine;
+          createForeignBlock(nativeLine);
         }
-        createForeignBlock(next);
         inHost = false;
       } else {
         //if this line is considered splitting in the foreign language we need to split again potentially
         if(isForeignSplit) {
-          var next = ""
           if(isForeignSplit == "after") {
-            current.text += nativeLine + "\n";
+            pushLine(nativeLine);
+            createForeignBlock();
           } else {
-            next = nativeLine;
+            createForeignBlock(nativeLine);
           }
-          createForeignBlock(next);
+        } else {
+          pushLine(nativeLine);
         }
-        current.text += nativeLine + "\n";
       }
       current.documentationCode = isDocumentationCode;
     //host language
@@ -80,7 +84,7 @@ var parse = function(text, hostLanguage, foreignLanguage) {
       if(!inHost) {
         if(isSplit == "after") {
           createHostBlock(line);
-          createHostBlock("");
+          createHostBlock();
         } else {
           createHostBlock(line);
         }
@@ -88,18 +92,19 @@ var parse = function(text, hostLanguage, foreignLanguage) {
       } else {
         if(isSplit) {
           if(isSplit == "after") {
-            current.text += line + "\n";
-            createHostBlock("");
+            pushLine(line);
+            createHostBlock();
           } else {
             createHostBlock(line);
           }
         } else {
-          current.text += line + "\n";
+          pushLine(line);
         }
       }
     }
   }
-  blocks.push(current);
+  //to close out last one properly and lazily
+  createHostBlock();
 
   blocks = _.filter(blocks, function(block) {
     return block.text;

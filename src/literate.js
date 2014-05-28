@@ -1,13 +1,14 @@
+//#Literate.js
+//this layer of wrapping basically adds file system semantics to load filenames, templates
+//and to write out files. All this uses promises from [node-utils.js](/node-utils.html) 
 var utils = require("./node-utils.js"),
     _ = require("underscore"),
     languages = require("./languages.js");
 
 var findLanguageName = function(extension) {
   for(var key in languages) {
-    if(languages.hasOwnProperty(key)) {
-      if(languages[key].extension == extension) {
-        return key;
-      }
+    if(languages.hasOwnProperty(key) && languages[key].extension == extension) {
+      return key;
     }
   }
 };

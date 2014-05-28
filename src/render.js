@@ -6,8 +6,16 @@ var render = function(code, template, hostLanguage, foreignLanguage) {
   
   var blocks = parse(code, hostLanguage, foreignLanguage)
 
+  var allLines = function(text, iterator) {
+    var lines = text.split("\n");
+    return _.reduce (lines, function(memo, line, index) {
+      return memo += iterator(line) + "\n";
+    }, "");
+  };
+
   var templateOptions = {
-      blocks: blocks
+      blocks: blocks,
+      allLines: allLines
   };
   _.extend.apply(_, [templateOptions].concat(extraArgs));
 

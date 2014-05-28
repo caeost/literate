@@ -1,9 +1,11 @@
 <%
 var string = "";
 _.each(blocks, function(block) {
-  if(block.langName == "markdown"){
-    string += converter.makeHtml(block.text);
+  var text = block.text;
+  if(block.langName !== "markdown") {
+    text = allLines(text, markdown.makeForeign);
   }
+  string += converter.makeHtml(text);
 });
 print(string);
 %>
