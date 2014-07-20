@@ -1,9 +1,10 @@
 var render = require("./render.js"),
     languages = require("./languages.js"),
     pagedown = require("pagedown"),
-    _ = require("underscore");
+    _ = require("underscore"),
+    highlight = require("highlight.js");
 
 var converter = new pagedown.Converter();
 
-module.exports = _.partial(render, _, _, _, _, {converter: converter, markdown: languages["markdown"]});
+module.exports = _.partial(render, _, _, {converter: converter, markdown: languages["markdown"], highlight: highlight});
 

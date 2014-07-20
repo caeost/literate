@@ -1,12 +1,38 @@
 #!/usr/bin/env node
-var argv = require('minimist')(process.argv.slice(2));
-
-var filename = argv._[0],
+var fs = require("fs"),
+    _ = require("underscore"),
+    utils = require("./src/node-utils.js"),
+    literate = require('./src/literate.js'),
+    argv = require("minimist")(process.argv.slice(2)),
+    filename = argv._[0] || ".",
     watch = argv.w,
-    generateHtml = argv.h,
-    output = argv.o;
+    output = argv.o,
+    templatePath = argv.t || "./src/templates/markdown-template.html",
+    renderFunc = require("./src/markdownRender.js");
 
-//change this to bin later
-var literate = require('./src/literate.js');
-var renderFunc = require("./src/markdownRender.js");
-literate(filename, renderFunc, output, "./src/templates/markdown-template.html");
+utils.read(templatePath).then(function(template) {
+  var legacy = function(path, output) {
+    utils.read(path).then(function(file) {
+      var fileName = _.last(path.split("/"));
+      var blocks = literate(file, fileName, null, "markdown");
+      
+      var rendered = renderFunc(blocks, template);
+      if(output) {
+        utils.write(output, rendered);
+      } else {
+        console.log(rendered);
+      }
+   });
+  };
+
+  if(fs.lstatSync(filename).isDirectory()) {
+    utils.walk(filename).then(function(results) {
+      results.forEach(function(path) {
+        legacy(path, output + "/" + path.replace(/\.[^.]*$/, ".html"));
+      });
+    });
+  } else {
+    legacy(filename, output);
+  }
+});
+

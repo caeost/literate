@@ -1,11 +1,12 @@
 //#Literate.js
 //this layer of wrapping basically adds file system semantics to load filenames, templates
-//and to write out files. All this uses promises from [node-utils.js](/node-utils.html) 
-var utils = require("./node-utils.js"),
-    _ = require("underscore"),
-    languages = require("./languages.js");
+//and to write out files.
+var _ = require("underscore"),
+    languages = require("./languages.js"),
+    parser = require("./parser.js"),
+    highlight = require("highlight.js").highlightAuto;
 
-var findLanguageName = function(extension) {
+var extensionToLanguage = function(extension) {
   for(var key in languages) {
     if(languages.hasOwnProperty(key) && languages[key].extension == extension) {
       return key;
@@ -13,41 +14,47 @@ var findLanguageName = function(extension) {
   }
 };
 
-//having the render func here makes it flexible but not as much an entry point as desired
-var literate = function(path, renders, output, templatePath) {
-  if(!_.isArray(renders)) {
-    renders = [renders];
+var literate = function(text, filename, hostLangName, foreignLangName) {
+
+  if(!hostLangName || !foreignLangName) {
+    var extensions = filename.split(".");
+    if(extensions.length > 1) {
+      extensions.shift();
+      extensions = _.last(extensions, 2);
+    } else {
+      // filename has no extensions... do something i guess
+    }
+
+    if(!hostLangName) {
+      hostLangName = extensionToLanguage(extensions.pop());
+      if(!hostLangName) {
+        var highlighted = highlight(text);
+        //two different ideas of language intersect here.. need to be kept consistent
+        hostLangName = highlighted.language;
+      }
+    }
+
+
+    if(!foreignLangName) {
+      if(extensions.length) {
+        foreignLangName = extensionToLanguage(extensions.pop());
+      }
+      if(!foreignLangName) {
+        var onlyForeign = _.reduce(text.split("\n"), function(memo, line) {
+          if(hostLang.checkForeign(line)) {
+            return memo + "\n" + hostLang.makeNative(line);
+          } else {
+            return memo;
+          }
+        }, "");
+
+        var highlighted = highlight(onlyForeign);
+        foreignLangName = highlighted.language;
+      }
+    }
   }
 
-  var extensions = path.match(/\.(\w+)/g);
-  extensions = _.map(extensions, function(extension) {
-    return extension.replace(/^\./,"");
-  });
-
-  var extension = extensions.pop();
-  var foreignExtension = extensions.pop();
-
-  var hostLanguage = findLanguageName(extension);
-
-  var foreignLanguage = "markdown";
-  if(foreignExtension) {
-    foreignLanguage = findLanguageName(foreignExtension);
-  }
-
-  utils.read(path).then(function(file) {
-    utils.read(templatePath).then(function(template) {
-      _.each(renders, function(render) {
-        var temp = render.template || template;
-        var rendered = render(file, temp, hostLanguage, foreignLanguage);
-        var out = render.output || output;
-        if(out) {
-          utils.write(out, rendered);
-        } else {
-          console.log(rendered);
-        }
-      });
-    });
-  });
+  return parser(text, hostLangName, foreignLangName);
 };
 
 module.exports = literate;

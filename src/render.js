@@ -1,18 +1,16 @@
-var _ = require("underscore"),
-    parse = require("./parser.js");
+var _ = require("underscore");
 
-var render = function(code, template, hostLanguage, foreignLanguage) {
-  var extraArgs = Array.prototype.slice.call(arguments, 4);
+var allLines = function(text, iterator) {
+  var lines = text.split("\n");
+  return _.reduce (lines, function(memo, line, index) {
+    return memo += iterator(line) + "\n";
+  }, "");
+};
+
+
+var render = function(blocks, template) {
+  var extraArgs = Array.prototype.slice.call(arguments, 2);
   
-  var blocks = parse(code, hostLanguage, foreignLanguage)
-
-  var allLines = function(text, iterator) {
-    var lines = text.split("\n");
-    return _.reduce (lines, function(memo, line, index) {
-      return memo += iterator(line) + "\n";
-    }, "");
-  };
-
   var templateOptions = {
       blocks: blocks,
       allLines: allLines

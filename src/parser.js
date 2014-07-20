@@ -10,8 +10,7 @@ var parse = function(text, hostLanguage, foreignLanguage) {
       checkDocumentation = _.bind(hostLangSpecs.checkDocumentation, hostLangSpecs),
       foreignLangSpecs = languages[foreignLanguage],
       foreignSplitBlocks = foreignLangSpecs.splitBlocks,
-
-  //list of blocks
+      //list of blocks
       blocks = [],
       current = {text: []},
       inHost = true;
@@ -34,6 +33,7 @@ var parse = function(text, hostLanguage, foreignLanguage) {
   };
   var createForeignBlock = _.partial(createBlock, _, foreignLanguage);
   var createHostBlock = _.partial(createBlock, _, hostLanguage);
+  // end helpers
 
   createHostBlock();
 
