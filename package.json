@@ -1,0 +1,12 @@
+{
+    "name":         "literate",
+    "version":      "0.0.1",
+    "repository":   "https://github.com/caeost/literate",
+    "dependencies": {
+	"underscore":    "*",
+	"minimist":      "*",
+	"pagedown":      "*",
+	"rsvp":          "*",
+	"writefile":     "*"
+    }
+}
