@@ -2,7 +2,7 @@ var render = require("./render.js"),
     languages = require("./languages.js"),
     pagedown = require("pagedown"),
     _ = require("underscore"),
-    highlight = require("highlight.js");
+    highlight = require("highlight");
 
 var converter = new pagedown.Converter();
 
