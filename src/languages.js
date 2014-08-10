@@ -1,5 +1,6 @@
 module.exports = {
   "javascript": {
+    name: "javascript",
     extension: "js",
     checkForeign: function(line) {
       return /^\s*\/\//.test(line);
@@ -19,6 +20,7 @@ module.exports = {
     type: "code"
   },
   "markdown": {
+    name: "markdown",
     extension: "md",
     checkForeign: function(line) {
       return /^[ ]{4}/.test(line);

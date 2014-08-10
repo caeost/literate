@@ -22,14 +22,14 @@ var literate = function(text, filename, hostLangName, foreignLangName) {
       extensions.shift();
       extensions = _.last(extensions, 2);
     } else {
-      // filename has no extensions... do something i guess
+// filename has no extensions... do something i guess
     }
 
     if(!hostLangName) {
       hostLangName = extensionToLanguage(extensions.pop());
       if(!hostLangName) {
         var highlighted = highlight(text);
-        //two different ideas of language intersect here.. need to be kept consistent
+// two different ideas of language intersect here.. need to be kept consistent
         hostLangName = highlighted.language;
       }
     }
