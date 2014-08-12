@@ -26,9 +26,16 @@ utils.read(templatePath).then(function(template) {
   };
 
   if(fs.lstatSync(filename).isDirectory()) {
+    if(!output) {
+      output = ".";
+    }
+    if(!/\/$/.test(output)) {
+      output += "/";
+    }
     utils.walk(filename).then(function(results) {
       results.forEach(function(path) {
-        legacy(path, output + "/" + path.replace(/\.[^.]*$/, ".html"));
+        console.log(path);
+        legacy(path, output + path.replace(/\.[^.]*$/, ".html"));
       });
     });
   } else {

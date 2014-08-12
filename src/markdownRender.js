@@ -1,8 +1,9 @@
-var render = require("./render.js"),
+var fs = require("fs"),
+    render = require("./render.js"),
     languages = require("./languages.js"),
     pagedown = require("pagedown"),
     _ = require("underscore"),
-    highlight = require("highlight");
+    highlight = require("highlight").Highlight;
 
 var converter = new pagedown.Converter();
 

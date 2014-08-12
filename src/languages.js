@@ -1,4 +1,25 @@
 module.exports = {
+  "css": {
+    name: "css",
+    extension: "css",
+    checkForeign = function() {
+      var inCommentBlock = false;
+      return  function(line) {
+                if(!inCommentBlock) inCommentBlock = /^\s*\/\*\**/.test(line);
+                return inCommentBlock;
+              }
+    }(),
+    makeNative: function(line) {
+      return line.replace(/^\s*\/\*\**/, "").replace(/^\*\**\/\s*/."");
+    },
+    makeForeign: function(line) {
+
+    },
+    splitBlocks: function(line) {
+
+    },
+    type: "code"
+  },
   "javascript": {
     name: "javascript",
     extension: "js",
@@ -6,7 +27,7 @@ module.exports = {
       return /^\s*\/\//.test(line);
     },
     makeNative: function(line) {
-      return line.replace(/^(\s*)\/\//, "$1");
+      return line.replace(/^(\s*)\/\//, "");
     },
     makeForeign: function(line) {
       return "//" + line;
@@ -26,7 +47,7 @@ module.exports = {
       return /^[ ]{4}/.test(line);
     },
     makeNative: function(line) {
-      return line.replace(/^[ ]{4}/, "");
+      return line.replace(/^[ ]*/, "");
     },
     makeForeign: function(line) {
       return "    " + line;

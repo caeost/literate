@@ -1,11 +1,20 @@
-<%
-var string = "";
-_.each(blocks, function(block) {
-  var text = block.text;
-  if(block.langName !== "markdown") {
-    text = allLines(text, markdown.makeForeign);
-  }
-  string += converter.makeHtml(text);
-});
-print(string);
-%>
+<html>
+  <head>
+    <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.0/styles/default.min.css">
+  </head>
+  <body>
+    <%
+      var string = "";
+      _.each(blocks, function(block) {
+        var text = block.text;
+        if(block.langName !== "markdown") {
+          text = allLines(text, markdown.makeForeign);
+        }
+        string += converter.makeHtml(text);
+      });
+      print(string);
+    %>
+    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </body>
+</html>

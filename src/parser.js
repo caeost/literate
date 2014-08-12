@@ -1,14 +1,21 @@
 var languages = require("./languages.js"),
     _ = require("underscore");
 
-// #todo:
-// clean up these initializations
+//###todo:
+//clean up these initializations
 var parse = function(text, hostLanguage, foreignLanguage) {
   var hostLangSpecs = languages[hostLanguage],
       foreignLangSpecs = languages[foreignLanguage],
       //list of blocks
       blocks = [{foreign: false, text: ""}],
       inHost = true;
+
+  if(!hostLangSpecs) {
+    console.error("ERROR: " + hostLanguage + " is not currently loaded");
+  }
+  if(!foreignLangSpecs) {
+    console.error("ERROR: " + foreignLanguage + " is not currently loaded");
+  }
 
   var checkForeign = _.bind(hostLangSpecs.checkForeign, hostLangSpecs),
       makeNative = hostLangSpecs.makeNative,
@@ -18,17 +25,16 @@ var parse = function(text, hostLanguage, foreignLanguage) {
   var lines = text.split("\n");
   for(var i = 0, len = lines.length; i < len; i++) {
     var line = lines[i],
-        previous = lines[i - 1],
         split = false;
     if(i < len - 1) line += "\n";
 
-    var foreign = checkForeign(line, previous);
+    var foreign = checkForeign(line, lines, i);
 
     if(foreign){
       line = makeNative(line);
       // for people using previous
       lines[i] = line;
-      split = foreignSplitBlocks(line, previous);
+      split = foreignSplitBlocks(line, lines, i);
     } else {
       split = splitBlocks(line);
     }
