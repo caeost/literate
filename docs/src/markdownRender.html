@@ -1,0 +1,20 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.0/styles/default.min.css">
+  </head>
+  <body>
+    <pre><code>var fs = require("fs"),
+    render = require("./render.js"),
+    languages = require("./languages.js"),
+    pagedown = require("pagedown"),
+    _ = require("underscore"),
+    highlight = require("highlight").Highlight;
+
+var converter = new pagedown.Converter();
+
+module.exports = _.partial(render, _, _, {converter: converter, markdown: languages["markdown"], highlight: highlight});
+</code></pre>
+    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </body>
+</html>

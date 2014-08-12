@@ -1,0 +1,83 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.0/styles/default.min.css">
+  </head>
+  <body>
+    <pre><code>var languages = require("./languages.js"),
+    _ = require("underscore");
+</code></pre><h3>todo:</h3>
+
+<p>clean up these initializations</p><pre><code>var parse = function(text, hostLanguage, foreignLanguage) {
+  var hostLangSpecs = languages[hostLanguage],
+      foreignLangSpecs = languages[foreignLanguage],
+</code></pre><p>list of blocks</p><pre><code>      blocks = [{foreign: false, text: ""}],
+      inHost = true;
+
+  if(!hostLangSpecs) {
+    console.error("ERROR: " + hostLanguage + " is not currently loaded");
+  }
+  if(!foreignLangSpecs) {
+    console.error("ERROR: " + foreignLanguage + " is not currently loaded");
+  }
+
+  var checkForeign = _.bind(hostLangSpecs.checkForeign, hostLangSpecs),
+      makeNative = hostLangSpecs.makeNative,
+      splitBlocks = hostLangSpecs.splitBlocks,
+      foreignSplitBlocks = foreignLangSpecs.splitBlocks;
+
+  var lines = text.split("\n");
+  for(var i = 0, len = lines.length; i &lt; len; i++) {
+    var line = lines[i],
+        previous = lines[i - 1],
+        split = false;
+    if(i &lt; len - 1) line += "\n";
+
+    var foreign = checkForeign(line, previous);
+
+    if(foreign){
+      line = makeNative(line);
+</code></pre><p>for people using previous</p><pre><code>      lines[i] = line;
+      split = foreignSplitBlocks(line, previous);
+    } else {
+      split = splitBlocks(line);
+    }
+</code></pre><p>should split if inHost and current line is foreign, or if not
+ inHost and current line is not foreign (aka host)</p><pre><code>    if(inHost == foreign || split) {
+      blocks.push({foreign: foreign, text: line});
+      inHost = !foreign;
+    } else {
+      var lastBlock = blocks[blocks.length - 1];
+      lastBlock.text += line;
+    }
+  }
+
+  var result = [],
+      hostBlock = {
+        language: languages[hostLanguage],
+        langName: hostLanguage,
+        extension: languages[hostLanguage].extension
+      },
+      foreignBlock = {
+        language: languages[foreignLanguage],
+        langName: foreignLanguage,
+        extension: languages[foreignLanguage].extension
+      };
+
+  for(var i = 0, len = blocks.length; i &lt; len; i++) {
+    var block = blocks[i];
+
+    if(block.text) {
+      _.extend(block, block.foreign ? foreignBlock : hostBlock);
+      result.push(block);
+    }
+  }
+
+  return result;
+};
+
+module.exports = parse;
+</code></pre>
+    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </body>
+</html>

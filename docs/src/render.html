@@ -1,0 +1,33 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.0/styles/default.min.css">
+  </head>
+  <body>
+    <pre><code>var _ = require("underscore");
+
+var allLines = function(text, iterator) {
+  var lines = text.split("\n");
+  return _.reduce (lines, function(memo, line, index) {
+    return memo += iterator(line) + "\n";
+  }, "");
+};
+
+
+var render = function(blocks, template) {
+  var extraArgs = Array.prototype.slice.call(arguments, 2);
+
+  var templateOptions = {
+      blocks: blocks,
+      allLines: allLines
+  };
+  _.extend.apply(_, [templateOptions].concat(extraArgs));
+
+  return _.template(template, templateOptions);
+};
+
+module.exports = render;
+</code></pre>
+    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </body>
+</html>

@@ -1,0 +1,59 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.0/styles/default.min.css">
+  </head>
+  <body>
+    <pre><code>var fs = require("fs"),
+    _ = require("underscore"),
+    languages = require("./languages.js"),
+    literate = require("./literate.js"),
+    utils = require("./node-utils.js");
+</code></pre><p>todo this is copied from render.js should be combined somehow, turns out its useful</p><pre><code>var allLines = function(text, iterator) {
+  var lines = text.split("\n");
+  var transformed = _.map(lines, function(line) {
+    return iterator(line);
+  }, "");
+  return transformed.join("\n");
+};
+
+var inverter = function(baseFileName, toLanguageName, options) {
+  options || (options = {});
+
+  var language = languages[toLanguageName],
+      originalExtension = _.last(baseFileName.split(".")),
+      originalLanguage = _.findWhere(languages, {extension: originalExtension}),
+      path = options.path,
+      watch = options.watch;
+
+  if(!path) {
+    path = baseFileName.replace(/\.\w*$/, "." + language.extension);
+  }
+
+  utils.read(baseFileName).then(function(contents) {
+    var blocks = literate(contents, baseFileName, null, toLanguageName);
+
+    var invertedContents = _.map(blocks, function(block) {
+      var text = block.text;
+      if(block.langName != toLanguageName) {
+        text = allLines(text, language.makeForeign)
+      }
+      return text;
+    }).join("");
+
+    utils.write(path, invertedContents).then(function() {
+      if(watch) {
+        fs.watch(path, function(type) {
+          debugger;
+          inverter(path, originalLanguage.name, {path: baseFileName});
+        });
+      }
+    });;
+  });
+};
+
+module.exports = inverter;
+</code></pre>
+    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </body>
+</html>

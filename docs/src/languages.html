@@ -1,0 +1,64 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.0/styles/default.min.css">
+  </head>
+  <body>
+    <pre><code>module.exports = {
+  "javascript": {
+    name: "javascript",
+    extension: "js",
+    checkForeign: function(line) {
+      return /^\s*\/\//.test(line);
+    },
+    makeNative: function(line) {
+      return line.replace(/^(\s*)\/\//, "");
+    },
+    makeForeign: function(line) {
+      return "//" + line;
+    },
+    splitBlocks: function(line) {
+      return false;
+    },
+    checkDocumentation: function(line) {
+      return false;
+    },
+    type: "code"
+  },
+  "markdown": {
+    name: "markdown",
+    extension: "md",
+    checkForeign: function(line) {
+      return /^[ ]{4}/.test(line);
+    },
+    makeNative: function(line) {
+      return line.replace(/^[ ]*/, "");
+    },
+    makeForeign: function(line) {
+      return "    " + line;
+    },
+    splitBlocks: function(line) {
+      return /^#{1,3}/.test(line);
+    },
+    checkDocumentation: function() {
+      var isDocCode = false;
+      return function(line) {
+        if(isDocCode) {
+          var foreign = this.checkForeign(line);
+          if(foreign) {
+            return true;
+          } else {
+            return isDocCode = false;
+          }
+        } else {
+          isDocCode = /^={3,}/.test(line);
+          return false;
+        }
+    }}(),
+    type: "text"
+  }
+};
+</code></pre>
+    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </body>
+</html>
